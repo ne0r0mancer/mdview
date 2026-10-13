@@ -200,6 +200,18 @@ body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 1
 <script>
 (() => {
   const TOC_DEPTH = 4; // deepest heading level shown in the sidebar
+
+  // Strikethrough needs ~~double~~ tildes. GFM also accepts ~single~, which turns
+  // prose like "~30k users and ~40k stars" into struck-out text.
+  marked.use({
+    tokenizer: {
+      del(src) {
+        const m = /^~~(?=[^\s~])([\s\S]*?[^\s~])~~(?!~)/.exec(src);
+        // null (not false) so marked doesn't fall back to its single-tilde rule
+        return m ? { type: "del", raw: m[0], text: m[1], tokens: this.lexer.inlineTokens(m[1]) } : null;
+      },
+    },
+  });
   const $ = (id) => document.getElementById(id);
   const docEl = $("doc"), tocEl = $("toc");
   let headings = [], items = [], linkMd = false;
