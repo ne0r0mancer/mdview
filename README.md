@@ -58,4 +58,5 @@ python3 -m http.server
 
 - Requires Python 3 for the `mdview` command; no packages needed.
 - Rendering uses [marked](https://marked.js.org) and [highlight.js](https://highlightjs.org) from a CDN, so pages need a network connection the first time.
-- Markdown is rendered as-is, without HTML sanitizing. Use it for your own files.
+- Rendered HTML goes through [DOMPurify](https://github.com/cure53/DOMPurify), so scripts inside a Markdown file don't run.
+- `?src=` only loads files from the same site as the viewer.

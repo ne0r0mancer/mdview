@@ -22,8 +22,8 @@ MD_SUFFIXES = {".md", ".markdown", ".mdown"}
 
 def build(src: Path, out: Path, template: str) -> None:
     payload = {"name": src.name, "markdown": src.read_text(encoding="utf-8"), "linkMd": True}
-    # "</" can't appear raw inside a <script>; "\/" is a valid JSON escape for "/".
-    data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+    # No raw "<" inside the <script>, so "</script>" and "<!--" can't break out of it.
+    data = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
     html = template.replace(SLOT, f'<script type="application/json" id="md-data">{data}</script>')
     out.write_text(html, encoding="utf-8")
 
