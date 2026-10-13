@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+"""Turn Markdown files into standalone HTML pages with a heading sidebar.
+
+Usage:
+  mdview FILE.md [FILE.md ...]      write FILE.html next to each file
+  mdview DIR                        convert every .md under DIR
+  mdview FILE.md -o out.html        choose the output path (single file only)
+  mdview FILE.md --open             open the result in the browser
+
+Links between converted .md files are rewritten to point at the .html pages.
+"""
+import argparse
+import json
+import sys
+import webbrowser
+from pathlib import Path
+
+TEMPLATE = Path(__file__).resolve().parent / "viewer.html"
+SLOT = '<script type="application/json" id="md-data"></script>'
+MD_SUFFIXES = {".md", ".markdown", ".mdown"}
+
+
+def build(src: Path, out: Path, template: str) -> None:
+    payload = {"name": src.name, "markdown": src.read_text(encoding="utf-8"), "linkMd": True}
+    # "</" can't appear raw inside a <script>; "\/" is a valid JSON escape for "/".
+    data = json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+    html = template.replace(SLOT, f'<script type="application/json" id="md-data">{data}</script>')
+    out.write_text(html, encoding="utf-8")
+
+
+def collect(paths):
+    for p in map(Path, paths):
+        if p.is_dir():
+            yield from sorted(f for f in p.rglob("*") if f.suffix.lower() in MD_SUFFIXES and f.is_file())
+        elif p.is_file():
+            yield p
+        else:
+            sys.exit(f"mdview: {p} does not exist")
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("paths", nargs="+", help="Markdown files or directories")
+    ap.add_argument("-o", "--output", help="output file (only with a single input file)")
+    ap.add_argument("--open", action="store_true", help="open the generated page in the browser")
+    args = ap.parse_args()
+
+    template = TEMPLATE.read_text(encoding="utf-8")
+    if SLOT not in template:
+        sys.exit(f"mdview: {TEMPLATE} is missing the md-data slot")
+
+    files = list(collect(args.paths))
+    if args.output and len(files) != 1:
+        sys.exit("mdview: -o needs exactly one input file")
+
+    outputs = []
+    for src in files:
+        out = Path(args.output) if args.output else src.with_suffix(".html")
+        build(src, out, template)
+        outputs.append(out)
+        print(out)
+
+    if args.open and outputs:
+        webbrowser.open(outputs[0].resolve().as_uri())
+
+
+if __name__ == "__main__":
+    main()
