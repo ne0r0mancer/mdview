@@ -23,6 +23,7 @@
   --accent-soft: #dde2f7;
   --code-bg: #e9ede8;
   --side-w: 300px;
+  --head-h: 40px;
   --serif: "Literata", Georgia, "Times New Roman", serif;
   --sans: "Instrument Sans", -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -39,8 +40,8 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-padding-top: 24px; }
-body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--serif); }
+body { margin: 0; height: 100vh; overflow: hidden; background: var(--paper); color: var(--ink); font-family: var(--serif); }
+[hidden] { display: none !important; }
 
 /* ---------- sidebar ---------- */
 .side {
@@ -50,8 +51,14 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(
   font-family: var(--sans); font-size: 14px; z-index: 20;
 }
 .side-head { padding: 22px 20px 12px; }
-.doc-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.3; }
+.doc-title { margin: 0 0 4px; font-size: 15px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
 .doc-meta { margin: 0; color: var(--muted); font-size: 12.5px; }
+.seg { display: flex; margin: 0 20px 10px; padding: 2px; border: 1px solid var(--line); border-radius: 7px; }
+.seg button {
+  flex: 1; font: inherit; font-size: 13px; color: var(--muted); background: none;
+  border: 0; border-radius: 5px; padding: 5px 0; cursor: pointer;
+}
+.seg button[aria-selected="true"] { color: var(--ink); background: var(--paper); font-weight: 500; }
 .tools { display: flex; gap: 6px; padding: 0 20px 12px; }
 .filter {
   flex: 1; min-width: 0; font: inherit; font-size: 13px; color: var(--ink);
@@ -63,41 +70,93 @@ body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(
   border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; cursor: pointer;
 }
 .icon-btn:hover { color: var(--ink); border-color: var(--muted); }
-.icon-btn:focus-visible, .toc a:focus-visible, .twist:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+:is(.icon-btn, .seg button, .tree a, .twist, .mini, .tab, .tab-x, .pane-btn, .link-btn):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-.toc-wrap { flex: 1; overflow-y: auto; padding: 4px 12px 32px 14px; overscroll-behavior: contain; }
-.toc, .toc ul { list-style: none; margin: 0; padding: 0; }
-.toc ul { margin-left: 13px; border-left: 1px solid var(--line); padding-left: 2px; }
-.toc li.collapsed > ul { display: none; }
-.toc li.hidden { display: none; }
+.side-scroll { flex: 1; overflow-y: auto; padding: 4px 12px 32px 14px; overscroll-behavior: contain; }
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 13px; border-left: 1px solid var(--line); padding-left: 2px; }
+.tree li.collapsed > ul { display: none; }
+.filtering .tree li.collapsed > ul { display: block; }
+.tree li.hidden { display: none; }
 .row { display: flex; align-items: flex-start; position: relative; }
 .twist {
   flex: none; width: 18px; height: 26px; padding: 0; border: 0; background: none;
   color: var(--muted); cursor: pointer; display: grid; place-items: center;
 }
 .twist svg { width: 9px; height: 9px; transition: transform .15s ease; }
-.toc li:not(.collapsed) > .row > .twist svg { transform: rotate(90deg); }
+.tree li:not(.collapsed) > .row > .twist svg { transform: rotate(90deg); }
 .twist.leaf { visibility: hidden; }
-.toc a {
+.tree a {
   flex: 1; min-width: 0; display: block; padding: 4px 8px; border-radius: 5px;
-  color: var(--muted); text-decoration: none; line-height: 18px;
+  color: var(--muted); text-decoration: none; line-height: 18px; overflow-wrap: anywhere;
 }
-.toc a:hover { color: var(--ink); background: color-mix(in srgb, var(--paper) 60%, transparent); }
-.toc li.on-path > .row > a { color: var(--ink); }
-.toc li.active > .row > a { color: var(--accent); background: var(--accent-soft); font-weight: 500; }
-.toc li.active > .row::before {
+.tree a:hover { color: var(--ink); background: color-mix(in srgb, var(--paper) 60%, transparent); }
+.tree li.on-path > .row > a { color: var(--ink); }
+.tree li.active > .row > a { color: var(--accent); background: var(--accent-soft); font-weight: 500; }
+.tree li.active > .row::before {
   content: ""; position: absolute; left: -3px; top: 3px; bottom: 3px; width: 3px;
   border-radius: 2px; background: var(--accent);
 }
-.toc > li > .row > a { font-weight: 500; }
-.toc mark { background: var(--accent-soft); color: inherit; border-radius: 2px; }
+#toc > li > .row > a, .tree li.folder > .row > a { font-weight: 500; color: var(--ink); }
+.tree mark { background: var(--accent-soft); color: inherit; border-radius: 2px; }
 .empty-toc { color: var(--muted); padding: 8px; }
+.row-actions { display: flex; gap: 2px; padding-top: 3px; opacity: 0; }
+.row:hover > .row-actions, .row:focus-within > .row-actions { opacity: 1; }
+.mini {
+  font: inherit; font-size: 13px; line-height: 1; color: var(--muted); background: none;
+  border: 0; border-radius: 4px; width: 20px; height: 20px; cursor: pointer;
+}
+.mini:hover { color: var(--ink); background: var(--paper); }
+.group-title {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin: 14px 0 4px; padding: 0 8px; font-size: 12.5px; font-weight: 600; color: var(--muted);
+}
+.group-title:first-child { margin-top: 4px; }
+.link-btn { font: inherit; font-weight: 400; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; }
+.r-name { display: block; }
+.r-sub { display: block; font-size: 12px; color: var(--muted); opacity: .85; }
+.note { color: var(--muted); font-size: 12.5px; padding: 4px 8px 4px 26px; }
 
-.side-foot { padding: 10px 20px; border-top: 1px solid var(--line); display: flex; gap: 6px; }
-.side-foot .icon-btn { padding: 5px 8px; }
+.side-foot { padding: 10px 14px; border-top: 1px solid var(--line); display: flex; gap: 4px; }
+.side-foot .icon-btn { padding: 5px 7px; white-space: nowrap; }
 
-/* ---------- content ---------- */
-main { margin-left: var(--side-w); padding: 56px 48px 40vh; }
+/* ---------- panes ---------- */
+.workspace { position: fixed; inset: 0 0 0 var(--side-w); display: flex; }
+.pane { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+.pane + .pane { border-left: 1px solid var(--line); }
+.pane-head {
+  flex: none; display: flex; height: var(--head-h); background: var(--rail);
+  border-bottom: 1px solid var(--line); font-family: var(--sans); font-size: 13px;
+}
+.tabs { flex: 1; min-width: 0; display: flex; overflow-x: auto; scrollbar-width: none; }
+.tab {
+  flex: none; display: flex; align-items: center; gap: 2px; max-width: 240px; position: relative;
+  padding: 0 4px 0 14px; color: var(--muted); border-right: 1px solid var(--line); cursor: pointer; user-select: none;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); background: var(--paper); }
+.pane.focused .tab.active::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 2px; background: var(--accent); }
+.tab-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab-dir { color: var(--muted); font-size: 12px; white-space: nowrap; margin-left: 4px; }
+.tab-x {
+  flex: none; font: inherit; font-size: 15px; line-height: 1; color: var(--muted); background: none;
+  border: 0; border-radius: 4px; width: 22px; height: 22px; cursor: pointer; opacity: 0;
+}
+.tab:hover .tab-x, .tab.active .tab-x, .tab-x:focus-visible { opacity: 1; }
+.tab-x:hover { background: var(--rail); color: var(--ink); }
+.pane-actions { flex: none; display: flex; align-items: center; gap: 4px; padding: 0 8px; }
+.pane-btn {
+  font: inherit; font-size: 12px; color: var(--muted); background: transparent;
+  border: 1px solid var(--line); border-radius: 5px; padding: 3px 8px; cursor: pointer;
+}
+.pane-btn:hover:not(:disabled) { color: var(--ink); border-color: var(--muted); }
+.pane-btn:disabled { opacity: .45; cursor: default; }
+.pane-body { flex: 1; overflow-y: auto; padding: 56px 48px 40vh; }
+.workspace:is([data-panes="2"], [data-panes="3"]) .pane-body { padding: 40px 32px 40vh; }
+.workspace[data-panes="3"] .doc { font-size: 16px; }
+.workspace[data-panes="3"] .doc h1 { font-size: 1.9rem; }
+
+/* ---------- document ---------- */
 .doc {
   max-width: 70ch; font-size: 18px; line-height: 1.7;
   font-variant-numeric: oldstyle-nums proportional-nums;
@@ -133,14 +192,20 @@ main { margin-left: var(--side-w); padding: 56px 48px 40vh; }
 .doc th, .doc td { border-bottom: 1px solid var(--line); padding: 7px 14px 7px 0; text-align: left; vertical-align: top; }
 .doc th { font-weight: 600; border-bottom-color: var(--muted); }
 
-/* ---------- empty state / drop ---------- */
-.start { max-width: 46ch; font-family: var(--sans); margin-top: 10vh; }
-.start h1 { font-family: var(--serif); font-size: 2rem; margin: 0 0 .6rem; }
-.start p { color: var(--muted); line-height: 1.6; margin: 0 0 1.2rem; }
+/* ---------- empty pane / drop / toast ---------- */
+.start { max-width: 46ch; font-family: var(--sans); margin-top: 8vh; }
+.start h1 { font-family: var(--serif); font-size: 2rem; margin: 0 0 .6rem; border: 0; padding: 0; }
+.start p { color: var(--muted); line-height: 1.6; margin: 0 0 1.2rem; font-size: 15px; }
+.start-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.start h2 { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--muted); margin: 2.4rem 0 .4rem; padding: 0; border: 0; }
+.start ul { list-style: none; padding: 0; margin: 0; font-size: 15px; line-height: 1.5; }
+.start li { padding: 4px 0; }
+.start li span { color: var(--muted); font-size: 13px; margin-left: 8px; }
 .btn {
-  font: inherit; font-weight: 500; color: var(--paper); background: var(--ink);
-  border: 0; border-radius: 6px; padding: 9px 16px; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 500; color: var(--paper); background: var(--ink);
+  border: 1px solid var(--ink); border-radius: 6px; padding: 8px 15px; cursor: pointer;
 }
+.btn.secondary { color: var(--ink); background: transparent; border-color: var(--line); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .dropzone {
   position: fixed; inset: 0; z-index: 50; display: none; place-items: center;
@@ -149,57 +214,97 @@ main { margin-left: var(--side-w); padding: 56px 48px 40vh; }
 }
 body.dragging .dropzone { display: grid; }
 .dropzone span { border: 2px dashed var(--accent); border-radius: 12px; padding: 40px 56px; }
-.error { color: #b3261e; font-family: var(--sans); }
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; max-width: min(90vw, 520px);
+  font-family: var(--sans); font-size: 14px; color: var(--paper); background: var(--ink);
+  padding: 10px 16px; border-radius: 8px;
+}
 
-/* ---------- mobile ---------- */
-.menu-btn { display: none; }
-@media (max-width: 860px) {
-  .side { transform: translateX(-100%); transition: transform .2s ease; box-shadow: none; width: min(88vw, 320px); }
-  body.side-open .side { transform: none; box-shadow: 0 0 0 100vmax rgba(0,0,0,.25); }
-  main { margin-left: 0; padding: 64px 16px 40vh; }
-  .doc { font-size: 17px; }
-  .doc h1 { font-size: 1.8rem; }
-  .menu-btn {
-    display: block; position: fixed; top: 12px; left: 12px; z-index: 15;
-    font-family: var(--sans); font-size: 13px; padding: 7px 12px; background: var(--rail); color: var(--ink);
-  }
+/* ---------- mobile & hidden sidebar ---------- */
+.menu-btn {
+  display: none; position: fixed; top: 0; left: 0; z-index: 15; width: 88px; height: var(--head-h);
+  font-family: var(--sans); font-size: 13px; color: var(--ink); background: var(--rail);
+  border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer;
 }
 body.side-hidden .side { display: none; }
-body.side-hidden main { margin-left: 0; }
-body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 12px; z-index: 15; font-family: var(--sans); font-size: 13px; padding: 7px 12px; background: var(--rail); color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } html { scroll-behavior: auto !important; } }
-@media print { .side, .menu-btn { display: none; } main { margin: 0; padding: 0; } }
+body.side-hidden .workspace { left: 0; }
+body.side-hidden .menu-btn { display: block; }
+body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
+@media (max-width: 860px) {
+  .side { transform: translateX(-100%); transition: transform .2s ease; width: min(88vw, 320px); }
+  body.side-open .side { transform: none; box-shadow: 0 0 0 100vmax rgba(0,0,0,.25); }
+  .workspace { left: 0; }
+  .menu-btn { display: block; }
+  .pane-head { padding-left: 88px; }
+  .pane:not(.focused) { display: none; }
+  .pane + .pane { border-left: 0; }
+  .split-btn { display: none; }
+  .pane-body, .workspace:is([data-panes="2"], [data-panes="3"]) .pane-body { padding: 32px 16px 40vh; }
+  .doc { font-size: 17px; }
+  .doc h1 { font-size: 1.8rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media print {
+  body { height: auto; overflow: visible; }
+  .side, .menu-btn, .pane-head, .pane:not(.focused) { display: none; }
+  .workspace { position: static; }
+  .pane-body { overflow: visible; padding: 0; }
+}
 </style>
 </head>
 <body>
-<nav class="side" aria-label="Table of contents">
+<nav class="side" aria-label="Sidebar">
   <div class="side-head">
     <p class="doc-title" id="docTitle">No document</p>
     <p class="doc-meta" id="docMeta"></p>
   </div>
+  <div class="seg" role="tablist">
+    <button role="tab" id="viewToc" aria-selected="true">Contents</button>
+    <button role="tab" id="viewFiles" aria-selected="false">Files</button>
+  </div>
   <div class="tools">
-    <input class="filter" id="filter" type="search" placeholder="Filter headings  /" aria-label="Filter headings">
+    <input class="filter" id="filter" type="search" placeholder="Filter headings  /" aria-label="Filter">
     <button class="icon-btn" id="expandAll" title="Expand all">+</button>
     <button class="icon-btn" id="collapseAll" title="Collapse all">−</button>
   </div>
-  <div class="toc-wrap" id="tocWrap"><ul class="toc" id="toc"></ul></div>
+  <div class="side-scroll" id="sideScroll">
+    <div id="tocView"><ul class="tree" id="toc"></ul></div>
+    <div id="filesView" hidden>
+      <section id="foldersSec">
+        <div class="group-title">Folders</div>
+        <div id="folders"></div>
+      </section>
+      <section>
+        <div class="group-title"><span>Recent</span><button class="link-btn" id="clearRecent" title="Remove files that aren't open from the list">Clear</button></div>
+        <ul class="tree" id="recent"></ul>
+      </section>
+    </div>
+  </div>
   <div class="side-foot">
-    <button class="icon-btn" id="openBtn">Open file</button>
+    <button class="icon-btn" id="openBtn">Open files</button>
+    <button class="icon-btn" id="folderBtn">Open folder</button>
     <button class="icon-btn" id="themeBtn">Theme</button>
     <button class="icon-btn" id="hideBtn" title="Hide sidebar ( [ )">Hide</button>
   </div>
 </nav>
-<button class="icon-btn menu-btn" id="menuBtn">Contents</button>
-<main><article class="doc" id="doc"></article></main>
-<div class="dropzone"><span>Drop a Markdown file to open it</span></div>
-<input type="file" id="fileInput" accept=".md,.markdown,.mdown,.txt,text/markdown" hidden>
+<button class="menu-btn" id="menuBtn">Sidebar</button>
+<main class="workspace" id="workspace"></main>
+<div class="dropzone"><span>Drop Markdown files or a folder</span></div>
+<input type="file" id="fileInput" accept=".md,.markdown,.mdown,.mkd,.txt,text/markdown" multiple hidden>
+<input type="file" id="folderInput" webkitdirectory hidden>
 
 <!-- mdview CLI fills this with {"name": ..., "markdown": ..., "linkMd": true} -->
 <script type="application/json" id="md-data"></script>
 
 <script>
 (() => {
-  const TOC_DEPTH = 4; // deepest heading level shown in the sidebar
+  const TOC_DEPTH = 4;          // deepest heading level shown in Contents
+  const MAX_PANES = 3;
+  const MAX_RECENT = 60;        // history entries kept (open files are never dropped)
+  const MAX_FOLDER_FILES = 3000;
+  const MAX_SNAPSHOT_BYTES = 30e6;
+  const MD_RE = /\.(md|markdown|mdown|mkd)$/i;
+  const SKIP_DIR = (name) => name.startsWith(".") || name === "node_modules";
 
   // Strikethrough needs ~~double~~ tildes. GFM also accepts ~single~, which turns
   // prose like "~30k users and ~40k stars" into struck-out text.
@@ -212,9 +317,80 @@ body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 1
       },
     },
   });
+
   const $ = (id) => document.getElementById(id);
-  const docEl = $("doc"), tocEl = $("toc");
-  let headings = [], items = [], linkMd = false;
+  function h(tag, attrs = {}, ...kids) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      if (k === "class") e.className = v;
+      else if (k === "text") e.textContent = v;
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid != null) e.append(kid);
+    return e;
+  }
+  const chevron = () => {
+    const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    s.setAttribute("viewBox", "0 0 10 10");
+    s.innerHTML = '<path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    return s;
+  };
+  const sideKey = (e) => e.altKey || e.metaKey || e.ctrlKey; // modifier-click opens in another pane
+
+  // ---------- storage (IndexedDB; falls back to memory only) ----------
+  const db = (() => {
+    let open;
+    try {
+      open = new Promise((resolve) => {
+        const r = indexedDB.open("mdview", 1);
+        r.onupgradeneeded = () => {
+          r.result.createObjectStore("docs", { keyPath: "id" });
+          r.result.createObjectStore("folders", { keyPath: "id" });
+          r.result.createObjectStore("kv");
+        };
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => resolve(null);
+      });
+    } catch { open = Promise.resolve(null); }
+    const run = async (store, mode, fn) => {
+      const d = await open;
+      if (!d) return undefined;
+      return new Promise((resolve) => {
+        try {
+          const t = d.transaction(store, mode);
+          const req = fn(t.objectStore(store));
+          t.oncomplete = () => resolve(req?.result);
+          t.onerror = t.onabort = () => resolve(undefined);
+        } catch { resolve(undefined); }
+      });
+    };
+    return {
+      all: (s) => run(s, "readonly", (o) => o.getAll()).then((r) => r || []),
+      get: (s, k) => run(s, "readonly", (o) => o.get(k)),
+      put: (s, v, k) => run(s, "readwrite", (o) => (k === undefined ? o.put(v) : o.put(v, k))),
+      del: (s, k) => run(s, "readwrite", (o) => o.delete(k)),
+    };
+  })();
+
+  const docs = new Map();      // id -> {id, name, path, markdown, openedAt, folderId?, folderName?, handle?, src?, linkMd?}
+  const folders = new Map();   // id -> {id, name, handle?, paths?, files?: [{path, markdown}]}
+  const openDirs = new Set();  // expanded folder/dir keys in the Files view
+  const panes = [];
+  let focused = 0, view = "toc", paneSeq = 0;
+  const focusedPane = () => panes[focused];
+
+  const persistDoc = (d) => db.put("docs", d);
+  const persistFolder = (f) => { const { granted, ...rest } = f; return db.put("folders", rest); };
+  let saveTimer;
+  function saveLayout() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => db.put("kv", {
+      panes: panes.map((p) => ({ tabs: p.tabs, active: p.active, scroll: p.scroll })),
+      focused, view, openDirs: [...openDirs],
+    }, "layout"), 300);
+  }
 
   // ---------- theme ----------
   const themeKey = "mdview-theme";
@@ -233,71 +409,321 @@ body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 1
     try { localStorage.setItem(themeKey, t); } catch {}
   };
 
-  // ---------- rendering ----------
+  // ---------- helpers ----------
   function slugify(text, used) {
-    let base = text.toLowerCase().trim()
+    const base = text.toLowerCase().trim()
       .replace(/[^\p{L}\p{N}\s-]/gu, "").replace(/\s+/g, "-").replace(/-+/g, "-") || "section";
     let slug = base, n = 1;
     while (used.has(slug)) slug = `${base}-${n++}`;
     used.add(slug);
     return slug;
   }
-
-  function render(markdown, name) {
-    docEl.innerHTML = DOMPurify.sanitize(marked.parse(markdown, { gfm: true }));
-    if (window.hljs) docEl.querySelectorAll("pre code").forEach((el) => hljs.highlightElement(el));
-
-    if (linkMd) {
-      docEl.querySelectorAll("a[href]").forEach((a) => {
-        const href = a.getAttribute("href");
-        if (!/^[a-z]+:/i.test(href)) a.setAttribute("href", href.replace(/\.(md|markdown)(?=$|#|\?)/i, ".html"));
-      });
+  const headingText = (el) => [...el.childNodes].filter((n) => !n.classList?.contains("anchor")).map((n) => n.textContent).join("").trim();
+  const dirname = (p) => p.split("/").slice(0, -1).join("/");
+  function resolvePath(from, rel) {
+    const parts = from.split("/").slice(0, -1);
+    for (const s of rel.split("/")) {
+      if (s === "..") parts.pop(); else if (s && s !== ".") parts.push(s);
     }
-
-    const used = new Set();
-    headings = [...docEl.querySelectorAll("h1,h2,h3,h4,h5,h6")];
-    headings.forEach((h) => {
-      h.id = h.id || slugify(h.textContent, used);
-      const a = document.createElement("a");
-      a.className = "anchor"; a.href = "#" + h.id; a.textContent = "#"; a.setAttribute("aria-hidden", "true");
-      h.prepend(a);
+    return parts.join("/");
+  }
+  function ago(t) {
+    const s = (Date.now() - t) / 1000;
+    if (s < 60) return "just now";
+    if (s < 3600) return `${Math.round(s / 60)} min ago`;
+    if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+    if (s < 86400 * 7) return `${Math.round(s / 86400)} d ago`;
+    return new Date(t).toLocaleDateString();
+  }
+  const where = (d) => d.folderName ? [d.folderName, dirname(d.path)].filter(Boolean).join("/") : d.src ? d.src : "";
+  // Directories before files at every level, then alphabetical.
+  function sortPaths(paths) {
+    return [...paths].sort((a, b) => {
+      const A = a.split("/"), B = b.split("/");
+      for (let i = 0; i < Math.min(A.length, B.length); i++) {
+        if (A[i] === B[i]) continue;
+        const ad = i < A.length - 1, bd = i < B.length - 1;
+        if (ad !== bd) return ad ? -1 : 1;
+        return A[i].localeCompare(B[i], undefined, { numeric: true, sensitivity: "base" });
+      }
+      return A.length - B.length;
     });
-
-    const h1s = headings.filter((h) => h.tagName === "H1");
-    const title = h1s[0] ? text(h1s[0]) : (name || "Untitled");
-    document.title = title;
-    $("docTitle").textContent = title;
-    const words = (docEl.textContent.match(/\S+/g) || []).length;
-    $("docMeta").textContent = `${name ? name + ", " : ""}${Math.max(1, Math.round(words / 230))} min read`;
-
-    // A lone H1 is the document title, so the tree starts at H2.
-    const tocHeads = headings.filter((h) => +h.tagName[1] <= TOC_DEPTH && !(h1s.length === 1 && h === h1s[0]));
-    buildToc(tocHeads);
-    if (location.hash) document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView();
-    spy();
+  }
+  const folderPaths = (f) => f.paths || (f.files || []).map((x) => x.path);
+  let toastTimer;
+  function toast(msg) {
+    document.querySelector(".toast")?.remove();
+    const t = h("div", { class: "toast", role: "status", text: msg });
+    document.body.append(t);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.remove(), 4500);
   }
 
-  const text = (h) => [...h.childNodes].filter((n) => !n.classList?.contains("anchor")).map((n) => n.textContent).join("").trim();
+  // ---------- reading files ----------
+  async function permit(handle, prompt) {
+    if (!handle?.queryPermission) return false;
+    let state = await handle.queryPermission({ mode: "read" });
+    if (state === "prompt" && prompt) state = await handle.requestPermission({ mode: "read" });
+    return state === "granted";
+  }
+  async function fileAt(dir, path) {
+    const parts = path.split("/");
+    for (const seg of parts.slice(0, -1)) dir = await dir.getDirectoryHandle(seg);
+    return dir.getFileHandle(parts.at(-1));
+  }
+  // Latest content from disk (or the folder snapshot); null when it can't be read.
+  async function readFresh(d, prompt) {
+    try {
+      if (d.folderId) {
+        const f = folders.get(d.folderId);
+        if (f?.handle && await permit(f.handle, prompt)) {
+          f.granted = true;
+          return await (await (await fileAt(f.handle, d.path)).getFile()).text();
+        }
+        const snap = f?.files?.find((x) => x.path === d.path);
+        if (snap) return snap.markdown;
+      } else if (d.handle && await permit(d.handle, prompt)) {
+        return await (await d.handle.getFile()).text();
+      } else if (d.src) {
+        const r = await fetch(d.src);
+        if (r.ok) return await r.text();
+      }
+    } catch {}
+    return null;
+  }
+
+  // ---------- panes ----------
+  function makePane(state = {}) {
+    const p = { uid: ++paneSeq, tabs: state.tabs || [], active: state.active || null, scroll: state.scroll || {}, tocHeads: [] };
+    p.tabsEl = h("div", { class: "tabs", role: "tablist" });
+    p.splitBtn = h("button", { class: "pane-btn split-btn", title: "Open this file in a new pane", onclick: () => split(p) }, "Split");
+    p.closeBtn = h("button", { class: "pane-btn", title: "Close this pane", onclick: () => closePane(p) }, "Close");
+    p.article = h("article", { class: "doc" });
+    p.body = h("div", { class: "pane-body" }, p.article);
+    p.el = h("section", { class: "pane" },
+      h("div", { class: "pane-head" }, p.tabsEl, h("div", { class: "pane-actions" }, p.splitBtn, p.closeBtn)),
+      p.body);
+    p.el.addEventListener("pointerdown", () => focusPane(p));
+    p.el.addEventListener("focusin", () => focusPane(p));
+    p.body.addEventListener("scroll", () => {
+      if (p.active) p.scroll[p.active] = Math.round(p.body.scrollTop);
+      saveLayout();
+      if (p === focusedPane() && !ticking) { ticking = true; requestAnimationFrame(spy); }
+    }, { passive: true });
+    p.body.addEventListener("click", (e) => onDocClick(e, p));
+    return p;
+  }
+  function addPane(p, index = panes.length) {
+    panes.splice(index, 0, p);
+    const ws = $("workspace");
+    ws.insertBefore(p.el, ws.children[index] || null);
+    ws.dataset.panes = panes.length;
+    panes.forEach(renderTabs);
+    return p;
+  }
+  function closePane(p) {
+    if (panes.length === 1) return;
+    const i = panes.indexOf(p);
+    panes.splice(i, 1);
+    p.el.remove();
+    $("workspace").dataset.panes = panes.length;
+    focused = Math.min(focused > i ? focused - 1 : focused, panes.length - 1);
+    panes.forEach(renderTabs);
+    focusPane(focusedPane(), true);
+  }
+  function split(p) {
+    if (!p.active || panes.length >= MAX_PANES) return;
+    const np = addPane(makePane({ tabs: [p.active], active: p.active, scroll: { [p.active]: p.scroll[p.active] || 0 } }), panes.indexOf(p) + 1);
+    renderPane(np);
+    focusPane(np, true);
+  }
+  // The pane a modifier-click opens into: a new one if there's room, else a neighbour.
+  function sidePane(p) {
+    if (panes.length < MAX_PANES) return addPane(makePane(), panes.indexOf(p) + 1);
+    return panes[(panes.indexOf(p) + 1) % panes.length];
+  }
+
+  function renderTabs(p) {
+    const names = {};
+    p.tabs.forEach((id) => { const n = docs.get(id)?.name; names[n] = (names[n] || 0) + 1; });
+    p.tabsEl.replaceChildren(...p.tabs.map((id) => {
+      const d = docs.get(id);
+      const active = id === p.active;
+      const t = h("div", { class: "tab" + (active ? " active" : ""), role: "tab", tabindex: 0, "aria-selected": String(active), title: d ? [where(d), d.path || d.name].filter(Boolean).join(": ") : id },
+        h("span", { class: "tab-name", text: d?.name || "?" }),
+        d && names[d.name] > 1 && where(d) ? h("span", { class: "tab-dir", text: where(d).split("/").pop() }) : null,
+        h("button", { class: "tab-x", "aria-label": `Close ${d?.name || "tab"}`, onclick: (e) => { e.stopPropagation(); closeTab(p, id); } }, "×"));
+      t.addEventListener("click", () => activate(p, id));
+      t.addEventListener("auxclick", (e) => { if (e.button === 1) closeTab(p, id); });
+      t.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(p, id); } });
+      return t;
+    }));
+    p.tabsEl.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    p.splitBtn.disabled = !p.active || panes.length >= MAX_PANES;
+    p.closeBtn.hidden = panes.length === 1;
+  }
+
+  function renderPane(p) {
+    renderTabs(p);
+    const d = docs.get(p.active);
+    if (d) renderDoc(p, d); else { p.active = null; renderStart(p); }
+    if (p === focusedPane()) refreshSide();
+  }
+
+  function renderDoc(p, d) {
+    const art = p.article;
+    art.innerHTML = DOMPurify.sanitize(marked.parse(d.markdown || "", { gfm: true }));
+    if (window.hljs) art.querySelectorAll("pre code").forEach((el) => hljs.highlightElement(el));
+    art.querySelectorAll("a[href]").forEach((a) => {
+      const href = a.getAttribute("href");
+      if (/^https?:/i.test(href)) { a.target = "_blank"; a.rel = "noopener"; }
+      else if (d.linkMd && !/^[a-z]+:/i.test(href)) a.setAttribute("href", href.replace(/\.(md|markdown)(?=$|#|\?)/i, ".html"));
+    });
+    const used = new Set();
+    const heads = [...art.querySelectorAll("h1,h2,h3,h4,h5,h6")];
+    heads.forEach((el) => {
+      el.dataset.slug = slugify(el.textContent, used);
+      el.prepend(h("a", { class: "anchor", href: "#" + el.dataset.slug, "aria-hidden": "true" }, "#"));
+    });
+    const h1s = heads.filter((el) => el.tagName === "H1");
+    p.title = h1s[0] ? headingText(h1s[0]) : d.name;
+    const words = (art.textContent.match(/\S+/g) || []).length;
+    p.meta = `${d.name}, ${Math.max(1, Math.round(words / 230))} min read`;
+    // A lone H1 is the document title, so the tree starts at H2.
+    p.tocHeads = heads.filter((el) => +el.tagName[1] <= TOC_DEPTH && !(h1s.length === 1 && el === h1s[0]));
+    p.body.scrollTop = p.scroll[d.id] || 0;
+  }
+
+  function renderStart(p) {
+    p.tocHeads = []; p.title = null;
+    const recent = sortedRecent().slice(0, 8);
+    p.article.replaceChildren(h("div", { class: "start" },
+      h("h1", { text: "Open Markdown files" }),
+      h("p", { text: "Drop files or a folder anywhere on this page, or choose them below. Everything you open stays under Files in the sidebar, and you can split the view to read several side by side." }),
+      h("div", { class: "start-actions" },
+        h("button", { class: "btn", onclick: () => pickFiles(p) }, "Open files"),
+        h("button", { class: "btn secondary", onclick: () => pickFolder() }, "Open folder")),
+      recent.length ? [
+        h("h2", { text: "Recent" }),
+        h("ul", {}, recent.map((d) => h("li", {},
+          h("a", { href: "#", class: "link-btn", onclick: (e) => { e.preventDefault(); reopen(d, { pane: p, side: sideKey(e) }); } }, d.name),
+          h("span", { text: [where(d), ago(d.openedAt)].filter(Boolean).join(", ") })))),
+      ] : null));
+    p.body.scrollTop = 0;
+  }
+
+  function activate(p, id) {
+    if (p.active === id) return;
+    p.active = id;
+    renderPane(p);
+    saveLayout();
+  }
+  function closeTab(p, id) {
+    const i = p.tabs.indexOf(id);
+    if (i < 0) return;
+    p.tabs.splice(i, 1);
+    delete p.scroll[id];
+    if (p.active === id) p.active = p.tabs[Math.min(i, p.tabs.length - 1)] || null;
+    if (!p.tabs.length && panes.length > 1) closePane(p); else renderPane(p);
+    renderFiles();
+    saveLayout();
+  }
+
+  function focusPane(p, force) {
+    const i = panes.indexOf(p);
+    if (i < 0 || (i === focused && !force)) return;
+    focused = i;
+    panes.forEach((q) => q.el.classList.toggle("focused", q === p));
+    refreshSide();
+    saveLayout();
+  }
+
+  // Open a document as a tab, in the focused pane unless told otherwise.
+  function openDoc(d, { pane = focusedPane(), side = false, hash = null } = {}) {
+    d.openedAt = Date.now();
+    docs.set(d.id, d);
+    persistDoc(d);
+    if (side) pane = sidePane(pane);
+    if (!pane.tabs.includes(d.id)) {
+      const at = pane.active ? pane.tabs.indexOf(pane.active) + 1 : pane.tabs.length;
+      pane.tabs.splice(at, 0, d.id);
+    }
+    pane.active = d.id;
+    renderPane(pane);
+    focusPane(pane, true);
+    const target = hash && pane.article.querySelector(`[data-slug="${CSS.escape(hash)}"]`);
+    if (target) { target.scrollIntoView({ block: "start" }); current = null; spy(); }
+    pruneRecent();
+    renderFiles();
+    saveLayout();
+  }
+  async function reopen(d, opts) {
+    const fresh = await readFresh(d, true);
+    if (fresh != null && fresh !== d.markdown) d.markdown = fresh;
+    openDoc(d, opts);
+  }
+
+  // ---------- links inside documents ----------
+  function onDocClick(e, p) {
+    const a = e.target.closest("a[href]");
+    if (!a) return;
+    const href = a.getAttribute("href");
+    if (href.startsWith("#")) {
+      const target = p.article.querySelector(`[data-slug="${CSS.escape(decodeURIComponent(href.slice(1)))}"]`);
+      if (target) { e.preventDefault(); target.scrollIntoView({ block: "start" }); history.replaceState(null, "", href); }
+      return;
+    }
+    // Relative links between files of an opened folder open as tabs.
+    const d = docs.get(p.active);
+    const f = d?.folderId && folders.get(d.folderId);
+    if (!f || /^[a-z][a-z0-9+.-]*:/i.test(href) || href.startsWith("/")) return;
+    const [file, hash] = href.split("#");
+    if (!MD_RE.test(file)) return;
+    const path = resolvePath(d.path, decodeURIComponent(file));
+    if (!folderPaths(f).includes(path)) return;
+    e.preventDefault();
+    openFolderFile(f, path, { pane: p, side: sideKey(e), hash: hash ? decodeURIComponent(hash) : null });
+  }
+
+  // ---------- Contents (headings of the focused pane) ----------
+  const tocEl = $("toc");
+  let items = [], current = null, ticking = false;
+
+  function refreshSide() {
+    const p = focusedPane();
+    if (!p) return;
+    buildToc(p.tocHeads);
+    $("docTitle").textContent = p.title || "No document";
+    $("docMeta").textContent = p.title ? p.meta : "";
+    document.title = p.title || "Markdown viewer";
+    current = null;
+    spy();
+    markActiveFile();
+    applyFilter();
+  }
 
   function buildToc(heads) {
-    tocEl.innerHTML = ""; items = [];
-    if (!heads.length) { tocEl.innerHTML = '<li class="empty-toc">No headings in this document.</li>'; return; }
-    const minLevel = Math.min(...heads.map((h) => +h.tagName[1]));
+    tocEl.replaceChildren(); items = [];
+    if (!heads.length) {
+      tocEl.append(h("li", { class: "empty-toc", text: focusedPane()?.active ? "No headings in this document." : "Headings appear here once a file is open." }));
+      return;
+    }
+    const minLevel = Math.min(...heads.map((el) => +el.tagName[1]));
     const stack = [{ level: minLevel - 1, ul: tocEl, li: null }];
-    for (const h of heads) {
-      const level = +h.tagName[1];
+    for (const el of heads) {
+      const level = +el.tagName[1];
       while (stack.length > 1 && stack[stack.length - 1].level >= level) stack.pop();
       const parent = stack[stack.length - 1];
-      const li = document.createElement("li");
-      li.innerHTML = `<div class="row"><button class="twist leaf" aria-label="Toggle section" tabindex="-1"><svg viewBox="0 0 10 10"><path d="M3 1.5 7 5 3 8.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><a href="#${h.id}"></a></div>`;
-      const label = text(h);
-      li.querySelector("a").textContent = label;
-      li._label = label; li._heading = h; li._parentLi = parent.li;
+      const label = headingText(el);
+      const li = h("li", {}, h("div", { class: "row" },
+        h("button", { class: "twist leaf", "aria-label": "Toggle section", tabindex: -1 }, chevron()),
+        h("a", { href: "#" + el.dataset.slug, text: label })));
+      li._label = label; li._heading = el; li._parentLi = parent.li;
       if (parent.li && !parent.ul) {
-        parent.ul = document.createElement("ul"); parent.li.appendChild(parent.ul);
+        parent.ul = h("ul"); parent.li.append(parent.ul);
         const tw = parent.li.querySelector(".twist"); tw.classList.remove("leaf"); tw.tabIndex = 0;
       }
-      parent.ul.appendChild(li);
+      parent.ul.append(li);
       li._depth = stack.length - 1;
       if (li._depth >= 1) li.classList.add("collapsed");
       stack.push({ level, ul: null, li });
@@ -307,55 +733,359 @@ body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 1
   }
 
   tocEl.addEventListener("click", (e) => {
-    const tw = e.target.closest(".twist");
-    if (tw) { tw.closest("li").classList.toggle("collapsed"); return; }
-    if (e.target.closest("a") && innerWidth <= 860) document.body.classList.remove("side-open");
+    const a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    const el = a.closest("li")._heading;
+    el.scrollIntoView({ block: "start" });
+    history.replaceState(null, "", "#" + el.dataset.slug);
+    if (innerWidth <= 860) document.body.classList.remove("side-open");
   });
-  $("expandAll").onclick = () => items.forEach((li) => li.classList.remove("collapsed"));
-  $("collapseAll").onclick = () => items.forEach((li) => li._depth >= 1 && li.querySelector(":scope > ul") && li.classList.add("collapsed"));
 
-  // ---------- scrollspy ----------
-  let current = null, ticking = false;
   function spy() {
     ticking = false;
-    if (!items.length) return;
+    const p = focusedPane();
+    if (!p || !items.length) return;
+    const top = p.body.getBoundingClientRect().top;
     let found = null;
     for (const li of items) {
-      if (li._heading.getBoundingClientRect().top <= 60) found = li; else break;
+      if (li._heading.getBoundingClientRect().top - top <= 60) found = li; else break;
     }
     found = found || items[0];
     if (found === current) return;
     items.forEach((li) => li.classList.remove("active", "on-path"));
     current = found;
     found.classList.add("active");
-    for (let p = found._parentLi; p; p = p._parentLi) { p.classList.add("on-path"); p.classList.remove("collapsed"); }
+    for (let q = found._parentLi; q; q = q._parentLi) { q.classList.add("on-path"); q.classList.remove("collapsed"); }
     if (found.querySelector(":scope > ul")) found.classList.remove("collapsed");
-    const row = found.querySelector(".row"), wrap = $("tocWrap");
+    if (view !== "toc") return;
+    const row = found.querySelector(".row"), wrap = $("sideScroll");
     const r = row.getBoundingClientRect(), w = wrap.getBoundingClientRect();
     if (r.top < w.top + 20 || r.bottom > w.bottom - 20) wrap.scrollTop += r.top - w.top - w.height / 3;
   }
-  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(spy); } }, { passive: true });
 
-  // ---------- filter ----------
-  $("filter").addEventListener("input", (e) => {
-    const q = e.target.value.trim().toLowerCase();
-    items.forEach((li) => { li.classList.remove("hidden"); li.querySelector("a").textContent = li._label; });
-    if (!q) return;
-    const keep = new Set();
-    items.forEach((li) => {
-      const i = li._label.toLowerCase().indexOf(q);
-      if (i < 0) return;
-      const a = li.querySelector("a");
-      a.innerHTML = "";
-      a.append(li._label.slice(0, i));
-      const m = document.createElement("mark"); m.textContent = li._label.slice(i, i + q.length); a.append(m);
-      a.append(li._label.slice(i + q.length));
-      for (let p = li; p; p = p._parentLi) { keep.add(p); if (p !== li) p.classList.remove("collapsed"); }
+  // ---------- Files (folders + recent) ----------
+  function node(label, { dir = false, title, onclick, extra } = {}) {
+    const a = h("a", { href: "#", title }, label);
+    if (onclick) a.addEventListener("click", onclick);
+    const li = h("li", { class: dir ? "dir" : null },
+      h("div", { class: "row" },
+        h("button", { class: "twist" + (dir ? "" : " leaf"), "aria-label": "Toggle folder", tabindex: dir ? 0 : -1 }, chevron()),
+        a, extra || null));
+    li._label = a.textContent;
+    return li;
+  }
+
+  function folderTree(f) {
+    const actions = h("span", { class: "row-actions" },
+      f.handle ? h("button", { class: "mini", title: "Rescan for new files", "aria-label": `Rescan ${f.name}`, onclick: () => rescan(f, true) }, "↻") : null,
+      h("button", { class: "mini", title: "Remove from Files", "aria-label": `Remove ${f.name}`, onclick: () => removeFolder(f) }, "×"));
+    const top = node(f.name, { dir: true, extra: actions, title: f.handle ? f.name : `${f.name} (copy made when opened; open the folder again to pick up changes)` });
+    top.classList.add("folder");
+    top.dataset.key = f.id;
+    if (!openDirs.has(f.id)) top.classList.add("collapsed");
+    const root = h("ul");
+    top.append(root);
+    if (f.handle && !f.granted) {
+      root.append(h("li", { class: "note" }, h("button", { class: "link-btn", onclick: () => rescan(f, true) }, "Allow access"), " to read the current files"));
+    }
+    const dirs = new Map([["", root]]);
+    const paths = folderPaths(f);
+    if (!paths.length) root.append(h("li", { class: "note", text: "No Markdown files in this folder." }));
+    for (const path of sortPaths(paths)) {
+      const parts = path.split("/");
+      for (let i = 0; i < parts.length - 1; i++) {
+        const rel = parts.slice(0, i + 1).join("/");
+        if (dirs.has(rel)) continue;
+        const dn = node(parts[i], { dir: true });
+        dn.dataset.key = `${f.id}/${rel}`;
+        if (!openDirs.has(dn.dataset.key)) dn.classList.add("collapsed");
+        const sub = h("ul");
+        dn.append(sub);
+        dirs.get(parts.slice(0, i).join("/")).append(dn);
+        dirs.set(rel, sub);
+      }
+      const fn = node(parts.at(-1), { title: `${path}\nOption-click to open in another pane`, onclick: (e) => { e.preventDefault(); openFolderFile(f, path, { side: sideKey(e) }); } });
+      fn.dataset.doc = `f:${f.id}:${path}`;
+      fn._label = path;
+      dirs.get(dirname(path)).append(fn);
+    }
+    return h("ul", { class: "tree" }, top);
+  }
+
+  function recentItem(d) {
+    const sub = [where(d), ago(d.openedAt)].filter(Boolean).join(", ");
+    const li = node(h("span", {}, h("span", { class: "r-name", text: d.name }), h("span", { class: "r-sub", text: sub })), {
+      title: `${d.path || d.name}\nOption-click to open in another pane`,
+      onclick: (e) => { e.preventDefault(); reopen(d, { side: sideKey(e) }); },
+      extra: h("span", { class: "row-actions" }, h("button", { class: "mini", title: "Remove from history", "aria-label": `Remove ${d.name} from history`, onclick: () => forget(d) }, "×")),
     });
-    items.forEach((li) => { if (!keep.has(li)) li.classList.add("hidden"); });
+    li.dataset.doc = d.id;
+    li._label = `${d.name} ${where(d)}`;
+    return li;
+  }
+
+  const sortedRecent = () => [...docs.values()].sort((a, b) => (b.openedAt || 0) - (a.openedAt || 0));
+  const isOpen = (id) => panes.some((p) => p.tabs.includes(id));
+
+  function renderFiles() {
+    const box = $("folders");
+    box.replaceChildren(...[...folders.values()].sort((a, b) => a.name.localeCompare(b.name)).map(folderTree));
+    $("foldersSec").hidden = !folders.size;
+    const recent = sortedRecent();
+    $("recent").replaceChildren(...(recent.length ? recent.map(recentItem) : [h("li", { class: "empty-toc", text: "Files you open show up here." })]));
+    $("clearRecent").hidden = !recent.some((d) => !isOpen(d.id));
+    markActiveFile();
+    applyFilter();
+  }
+
+  function markActiveFile() {
+    const id = focusedPane()?.active;
+    $("filesView").querySelectorAll("li.active").forEach((li) => li.classList.remove("active"));
+    if (!id) return;
+    // Folder files are marked in their folder; Recent only marks files opened on their own.
+    const scope = docs.get(id)?.folderId && folders.has(docs.get(id).folderId) ? $("folders") : $("recent");
+    scope.querySelectorAll("li[data-doc]").forEach((li) => {
+      if (li.dataset.doc !== id) return;
+      li.classList.add("active");
+      for (let q = li.parentElement.closest("li"); q; q = q.parentElement.closest("li")) q.classList.remove("collapsed");
+    });
+  }
+
+  function pruneRecent() {
+    const extra = sortedRecent().filter((d) => !isOpen(d.id)).slice(Math.max(0, MAX_RECENT - panes.reduce((n, p) => n + p.tabs.length, 0)));
+    extra.forEach((d) => { docs.delete(d.id); db.del("docs", d.id); });
+  }
+  function forget(d) {
+    panes.forEach((p) => { if (p.tabs.includes(d.id)) closeTab(p, d.id); });
+    docs.delete(d.id);
+    db.del("docs", d.id);
+    renderFiles();
+  }
+  $("clearRecent").onclick = () => {
+    sortedRecent().filter((d) => !isOpen(d.id)).forEach((d) => { docs.delete(d.id); db.del("docs", d.id); });
+    renderFiles();
+  };
+
+  async function openFolderFile(f, path, opts = {}) {
+    const id = `f:${f.id}:${path}`;
+    const d = docs.get(id) || { id, name: path.split("/").pop(), path, folderId: f.id, folderName: f.name };
+    const fresh = await readFresh(d, true);
+    if (fresh == null && d.markdown == null) {
+      toast(`Couldn't read ${path}. Allow access to ${f.name} and try again.`);
+      renderFiles();
+      return;
+    }
+    if (fresh != null) d.markdown = fresh;
+    openDoc(d, opts);
+  }
+
+  function removeFolder(f) {
+    folders.delete(f.id);
+    db.del("folders", f.id);
+    renderFiles();
+  }
+
+  async function walkHandle(dir, prefix, out) {
+    for await (const [name, child] of dir.entries()) {
+      if (out.length >= MAX_FOLDER_FILES) return;
+      if (child.kind === "directory") { if (!SKIP_DIR(name)) await walkHandle(child, prefix + name + "/", out); }
+      else if (MD_RE.test(name)) out.push(prefix + name);
+    }
+  }
+  async function rescan(f, prompt) {
+    if (!f.handle) return;
+    if (!await permit(f.handle, prompt)) { if (prompt) toast(`No access to ${f.name}.`); return; }
+    f.granted = true;
+    const paths = [];
+    await walkHandle(f.handle, "", paths);
+    f.paths = paths;
+    persistFolder(f);
+    renderFiles();
+  }
+
+  // Add or replace a folder, show it in Files, and open its README if the pane is empty.
+  function addFolder(f) {
+    folders.set(f.id, f);
+    persistFolder(f);
+    openDirs.add(f.id);
+    setView("files");
+    renderFiles();
+    const p = focusedPane();
+    const paths = folderPaths(f);
+    const readme = paths.find((x) => /^(readme|index)\.(md|markdown)$/i.test(x));
+    if (p && !p.active && readme) openFolderFile(f, readme);
+    toast(`${f.name}: ${paths.length} Markdown file${paths.length === 1 ? "" : "s"}`);
+  }
+  async function addFolderFromHandle(dh) {
+    let id = null;
+    for (const f of folders.values()) {
+      if (f.handle && await f.handle.isSameEntry(dh).catch(() => false)) id = f.id;
+    }
+    const paths = [];
+    await walkHandle(dh, "", paths);
+    addFolder({ id: id || "d" + Date.now().toString(36), name: dh.name, handle: dh, paths, granted: true });
+  }
+  // Without folder handles (Firefox, Safari) the folder is kept as a copy of its Markdown files.
+  async function addFolderFromFiles(name, list) {
+    const files = [];
+    let bytes = 0;
+    for (const { path, file } of list) {
+      if (files.length >= MAX_FOLDER_FILES || bytes + file.size > MAX_SNAPSHOT_BYTES) break;
+      bytes += file.size;
+      files.push({ path, markdown: await file.text() });
+    }
+    const key = files.map((x) => x.path).sort().join("\n");
+    const same = [...folders.values()].find((f) => !f.handle && f.name === name && folderPaths(f).slice().sort().join("\n") === key);
+    addFolder({ id: same?.id || "d" + Date.now().toString(36), name, files });
+  }
+  function filesFromInput(fileList) {
+    const list = [...fileList].map((file) => ({ file, rel: file.webkitRelativePath || file.name }));
+    if (!list.length) return;
+    const name = list[0].rel.split("/")[0];
+    const md = list
+      .map(({ file, rel }) => ({ file, path: rel.split("/").slice(1).join("/") }))
+      .filter(({ path }) => MD_RE.test(path) && !path.split("/").slice(0, -1).some(SKIP_DIR));
+    addFolderFromFiles(name, md);
+  }
+  async function filesFromEntry(dirEntry) {
+    const out = [];
+    async function walk(entry, prefix) {
+      const reader = entry.createReader();
+      for (;;) {
+        const batch = await new Promise((res, rej) => reader.readEntries(res, rej));
+        if (!batch.length) break;
+        for (const child of batch) {
+          if (out.length >= MAX_FOLDER_FILES) return;
+          if (child.isDirectory) { if (!SKIP_DIR(child.name)) await walk(child, prefix + child.name + "/"); }
+          else if (MD_RE.test(child.name)) out.push({ path: prefix + child.name, file: await new Promise((res, rej) => child.file(res, rej)) });
+        }
+      }
+    }
+    await walk(dirEntry, "");
+    addFolderFromFiles(dirEntry.name, out);
+  }
+
+  async function openFileHandle(handle, opts) {
+    const file = await handle.getFile();
+    openDoc({ id: "n:" + file.name, name: file.name, path: file.name, markdown: await file.text(), handle }, opts);
+  }
+  async function openFile(file, opts) {
+    openDoc({ id: "n:" + file.name, name: file.name, path: file.name, markdown: await file.text() }, opts);
+  }
+
+  async function pickFiles(p = focusedPane()) {
+    focusPane(p);
+    if (window.showOpenFilePicker) {
+      let handles = [];
+      try {
+        handles = await showOpenFilePicker({ multiple: true, types: [{ description: "Markdown", accept: { "text/markdown": [".md", ".markdown", ".mdown", ".mkd", ".txt"] } }] });
+      } catch { return; }
+      for (const fh of handles) await openFileHandle(fh);
+    } else $("fileInput").click();
+  }
+  async function pickFolder() {
+    if (window.showDirectoryPicker) {
+      let dh;
+      try { dh = await showDirectoryPicker({ mode: "read" }); } catch { return; }
+      await addFolderFromHandle(dh);
+    } else $("folderInput").click();
+  }
+  $("openBtn").onclick = () => pickFiles();
+  $("folderBtn").onclick = () => pickFolder();
+  $("fileInput").onchange = async (e) => { for (const f of e.target.files) await openFile(f); e.target.value = ""; };
+  $("folderInput").onchange = (e) => { filesFromInput(e.target.files); e.target.value = ""; };
+
+  // ---------- drag & drop ----------
+  let dragDepth = 0;
+  addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; document.body.classList.add("dragging"); });
+  addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
+  addEventListener("dragover", (e) => e.preventDefault());
+  addEventListener("drop", (e) => {
+    e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging");
+    // DataTransfer items are only readable during the event, so grab everything now.
+    const dropped = [...e.dataTransfer.items].filter((i) => i.kind === "file").map((item) => ({
+      handle: item.getAsFileSystemHandle ? item.getAsFileSystemHandle().catch(() => null) : Promise.resolve(null),
+      entry: item.webkitGetAsEntry?.(),
+      file: item.getAsFile(),
+    }));
+    (async () => {
+      for (const it of dropped) {
+        const handle = await it.handle;
+        if (handle?.kind === "directory") await addFolderFromHandle(handle);
+        else if (handle?.kind === "file") await openFileHandle(handle);
+        else if (it.entry?.isDirectory) await filesFromEntry(it.entry);
+        else if (it.file) await openFile(it.file);
+      }
+    })();
   });
 
-  // ---------- sidebar toggles & keys ----------
+  // ---------- sidebar views, filter, keys ----------
+  function setView(v) {
+    view = v;
+    $("viewToc").setAttribute("aria-selected", String(v === "toc"));
+    $("viewFiles").setAttribute("aria-selected", String(v === "files"));
+    $("tocView").hidden = v !== "toc";
+    $("filesView").hidden = v !== "files";
+    $("filter").placeholder = v === "toc" ? "Filter headings  /" : "Filter files  /";
+    $("filter").value = "";
+    applyFilter();
+    saveLayout();
+  }
+  $("viewToc").onclick = () => setView("toc");
+  $("viewFiles").onclick = () => setView("files");
+
+  function applyFilter() {
+    const q = $("filter").value.trim().toLowerCase();
+    $("sideScroll").classList.toggle("filtering", !!q);
+    if (view === "toc") {
+      items.forEach((li) => { li.classList.remove("hidden"); li.querySelector("a").textContent = li._label; });
+      if (!q) return;
+      const keep = new Set();
+      items.forEach((li) => {
+        const i = li._label.toLowerCase().indexOf(q);
+        if (i < 0) return;
+        const a = li.querySelector("a");
+        a.replaceChildren(li._label.slice(0, i), h("mark", { text: li._label.slice(i, i + q.length) }), li._label.slice(i + q.length));
+        for (let p = li; p; p = p._parentLi) keep.add(p);
+      });
+      items.forEach((li) => { if (!keep.has(li)) li.classList.add("hidden"); });
+    } else {
+      const fv = $("filesView");
+      fv.querySelectorAll("li").forEach((li) => li.classList.remove("hidden"));
+      if (!q) return;
+      fv.querySelectorAll("li[data-doc]").forEach((li) => { if (!li._label.toLowerCase().includes(q)) li.classList.add("hidden"); });
+      [...fv.querySelectorAll("li.dir")].reverse().forEach((li) => {
+        if (!li.querySelector("li[data-doc]:not(.hidden)")) li.classList.add("hidden");
+      });
+    }
+  }
+  $("filter").addEventListener("input", applyFilter);
+
+  // Folding: chevrons everywhere, and folder names in Files.
+  $("sideScroll").addEventListener("click", (e) => {
+    const hit = e.target.closest(".twist:not(.leaf)") || e.target.closest("li.dir > .row > a");
+    if (!hit) return;
+    e.preventDefault();
+    const li = hit.closest("li");
+    li.classList.toggle("collapsed");
+    if (li.dataset.key) li.classList.contains("collapsed") ? openDirs.delete(li.dataset.key) : openDirs.add(li.dataset.key);
+    saveLayout();
+  });
+  function setAllFolded(folded) {
+    if (view === "toc") {
+      items.forEach((li) => { if (folded ? li._depth >= 1 && li.querySelector(":scope > ul") : true) li.classList.toggle("collapsed", folded); });
+    } else {
+      $("filesView").querySelectorAll("li.dir").forEach((li) => {
+        li.classList.toggle("collapsed", folded);
+        folded ? openDirs.delete(li.dataset.key) : openDirs.add(li.dataset.key);
+      });
+      saveLayout();
+    }
+  }
+  $("expandAll").onclick = () => setAllFolded(false);
+  $("collapseAll").onclick = () => setAllFolded(true);
+
   $("menuBtn").onclick = () => {
     if (document.body.classList.contains("side-hidden")) document.body.classList.remove("side-hidden");
     else document.body.classList.toggle("side-open");
@@ -366,48 +1096,57 @@ body.side-hidden .menu-btn { display: block; position: fixed; top: 12px; left: 1
   });
   document.addEventListener("keydown", (e) => {
     if (e.target.matches("input, textarea")) { if (e.key === "Escape") e.target.blur(); return; }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === "/") { e.preventDefault(); document.body.classList.remove("side-hidden"); $("filter").focus(); }
     if (e.key === "[") document.body.classList.toggle("side-hidden");
   });
 
-  // ---------- loading ----------
-  function readFile(file) {
-    if (!file) return;
-    file.text().then((md) => { linkMd = false; history.replaceState(null, "", location.pathname); render(md, file.name); scrollTo(0, 0); });
-  }
-  $("openBtn").onclick = () => $("fileInput").click();
-  $("fileInput").onchange = (e) => readFile(e.target.files[0]);
-  let dragDepth = 0;
-  addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; document.body.classList.add("dragging"); });
-  addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
-  addEventListener("dragover", (e) => e.preventDefault());
-  addEventListener("drop", (e) => { e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging"); readFile(e.dataTransfer.files[0]); });
+  // ---------- start-up ----------
+  (async () => {
+    const [savedDocs, savedFolders, layout] = await Promise.all([db.all("docs"), db.all("folders"), db.get("kv", "layout")]);
+    savedDocs.forEach((d) => docs.set(d.id, d));
+    savedFolders.forEach((f) => folders.set(f.id, f));
+    (layout?.openDirs || []).forEach((k) => openDirs.add(k));
 
-  function showStart(msg) {
-    docEl.innerHTML = `<div class="start"><h1>Open a Markdown file</h1>
-      <p>Drop a <code>.md</code> file anywhere on this page, or choose one. Headings show up in the sidebar as a tree you can filter and fold.</p>
-      <p class="error" hidden></p>
-      <button class="btn" id="startOpen">Choose file</button></div>`;
-    if (msg) { const e = docEl.querySelector(".error"); e.textContent = msg; e.hidden = false; }
-    $("startOpen").onclick = () => $("fileInput").click();
-    tocEl.innerHTML = '<li class="empty-toc">Headings appear here once a file is open.</li>';
-  }
+    const states = (layout?.panes || []).map((s) => {
+      const tabs = (s.tabs || []).filter((id) => docs.has(id));
+      return { tabs, active: tabs.includes(s.active) ? s.active : tabs[0] || null, scroll: s.scroll || {} };
+    }).filter((s, i) => i === 0 || s.tabs.length).slice(0, MAX_PANES);
+    (states.length ? states : [{}]).forEach((s) => addPane(makePane(s)));
+    focused = Math.min(layout?.focused || 0, panes.length - 1);
+    view = layout?.view === "files" ? "files" : "toc";
+    panes.forEach(renderPane);
+    focusPane(focusedPane(), true);
+    setView(view);
+    renderFiles();
 
-  const embedded = $("md-data").textContent.trim();
-  const src = new URLSearchParams(location.search).get("src");
-  if (embedded) {
-    const data = JSON.parse(embedded);
-    linkMd = !!data.linkMd;
-    render(data.markdown, data.name);
-  } else if (src && new URL(src, location.href).origin !== location.origin) {
-    showStart("Only files from this site can be opened with ?src=.");
-  } else if (src) {
-    fetch(src).then((r) => { if (!r.ok) throw new Error(`${r.status} ${r.statusText}`); return r.text(); })
-      .then((md) => render(md, src.split("/").pop()))
-      .catch((err) => showStart(`Could not load ${src}: ${err.message}. Browsers block loading files from file:// pages, so serve this folder over http or use the mdview command.`));
-  } else {
-    showStart();
-  }
+    const embedded = $("md-data").textContent.trim();
+    const src = new URLSearchParams(location.search).get("src");
+    const hash = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+    if (embedded) {
+      const data = JSON.parse(embedded);
+      openDoc({ id: "e:" + data.name, name: data.name, path: data.name, markdown: data.markdown, linkMd: !!data.linkMd }, { hash });
+    } else if (src && new URL(src, location.href).origin !== location.origin) {
+      toast("Only files from this site can be opened with ?src=.");
+    } else if (src) {
+      try {
+        const r = await fetch(src);
+        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+        openDoc({ id: "s:" + src, name: src.split("/").pop(), path: src, src, markdown: await r.text() }, { hash });
+      } catch (err) {
+        toast(`Could not load ${src}: ${err.message}. Pages opened from file:// can't load other files; serve the folder over http or use the mdview command.`);
+      }
+    }
+
+    // Pick up changes on disk where access was already granted.
+    for (const f of folders.values()) if (f.handle && await permit(f.handle, false)) await rescan(f, false);
+    for (const p of panes) {
+      const d = docs.get(p.active);
+      if (!d || d.id.startsWith("e:")) continue;
+      const fresh = await readFresh(d, false);
+      if (fresh != null && fresh !== d.markdown) { d.markdown = fresh; persistDoc(d); renderPane(p); }
+    }
+  })();
 })();
 </script>
 </body>
