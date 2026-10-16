@@ -10,10 +10,13 @@ A static HTML viewer for Markdown files with a sidebar built from all headers an
 - **Folders:** open a folder and browse all its Markdown files as a tree. Relative links between them (`[setup](guides/setup.md#install)`) open as tabs.
 - **History:** every file you open is kept under **Recent**, and your open tabs and panes come back when you reopen the viewer.
 - **Side by side:** up to three panes, each with its own tabs. **Split** opens the current file next to itself; Option-click (or ⌘/Ctrl-click) a file to open it in another pane. Contents follows the pane you're in.
+- **Drag and drop:** while you drag files or a folder over the page, each pane shows a drop zone, and a strip on the right opens them in a new pane. Empty panes show a drop area at rest.
 - Filter headings or files by typing (press `/` to jump to the filter)
 - Light and dark themes, following the system by default
 - Syntax highlighting, GFM tables and task lists
 - Works on phones: the sidebar becomes a drawer
+
+![Drop zones while dragging a file](docs/screenshot-drop.png)
 
 ![Light theme](docs/screenshot-light.png)
 
@@ -41,7 +44,7 @@ ln -s "$PWD/mdview" /usr/local/bin/mdview
 
 ### Open files and folders in the viewer
 
-Open `viewer.html` in a browser and drop Markdown files or a whole folder on it, or use **Open files** / **Open folder**. Folders skip hidden directories and `node_modules`.
+Open `viewer.html` in a browser and drop Markdown files or a whole folder on a pane (or on the right edge for a new pane), or use **Open files** / **Open folder**. Folders skip hidden directories and `node_modules`.
 
 History, folders and layout are stored in the browser (IndexedDB) for that page, so they're per browser and per location of `viewer.html`.
 

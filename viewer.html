@@ -207,13 +207,30 @@ body { margin: 0; height: 100vh; overflow: hidden; background: var(--paper); col
 }
 .btn.secondary { color: var(--ink); background: transparent; border-color: var(--line); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.dropzone {
-  position: fixed; inset: 0; z-index: 50; display: none; place-items: center;
-  background: color-mix(in srgb, var(--paper) 85%, transparent);
-  font-family: var(--sans); font-size: 18px; color: var(--accent);
+.start-drop {
+  border: 2px dashed var(--line); border-radius: 14px; padding: 28px 24px; margin-bottom: 1.2rem;
+  display: grid; justify-items: center; gap: 12px; text-align: center;
 }
-body.dragging .dropzone { display: grid; }
-.dropzone span { border: 2px dashed var(--accent); border-radius: 12px; padding: 40px 56px; }
+.start .start-drop p { margin: 0; color: var(--ink); font-size: 16px; }
+.start .start-drop .or { color: var(--muted); font-size: 13px; }
+.start .hint { font-size: 14px; }
+
+/* Shown only while files are dragged over the page: one zone per pane, plus a new-pane strip. */
+.pane { position: relative; }
+.drop-target, .drop-new {
+  display: none; place-items: center; text-align: center; font-family: var(--sans); color: var(--muted);
+  border: 2px dashed var(--line); background: color-mix(in srgb, var(--paper) 88%, transparent);
+}
+.drop-target { position: absolute; inset: calc(var(--head-h) + 10px) 10px 10px; z-index: 30; border-radius: 14px; }
+.drop-new {
+  position: fixed; top: 10px; right: 10px; bottom: 10px; width: min(24vw, 260px); z-index: 31;
+  border-radius: 14px; background: color-mix(in srgb, var(--rail) 94%, transparent);
+}
+body.dragging .drop-target, body.dragging.can-split .drop-new { display: grid; }
+body.dragging.can-split .pane:last-child .drop-target { right: calc(min(24vw, 260px) + 20px); }
+.drop-target.over, .drop-new.over { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 85%, transparent); }
+.drop-label { font-size: 17px; font-weight: 500; pointer-events: none; }
+.drop-sub { display: block; margin-top: 6px; font-size: 13px; font-weight: 400; opacity: .8; }
 .toast {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 60; max-width: min(90vw, 520px);
   font-family: var(--sans); font-size: 14px; color: var(--paper); background: var(--ink);
@@ -238,7 +255,8 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
   .pane-head { padding-left: 88px; }
   .pane:not(.focused) { display: none; }
   .pane + .pane { border-left: 0; }
-  .split-btn { display: none; }
+  .split-btn, .drop-new { display: none !important; }
+  body.dragging.can-split .pane:last-child .drop-target { right: 10px; }
   .pane-body, .workspace:is([data-panes="2"], [data-panes="3"]) .pane-body { padding: 32px 16px 40vh; }
   .doc { font-size: 17px; }
   .doc h1 { font-size: 1.8rem; }
@@ -289,7 +307,7 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
 </nav>
 <button class="menu-btn" id="menuBtn">Sidebar</button>
 <main class="workspace" id="workspace"></main>
-<div class="dropzone"><span>Drop Markdown files or a folder</span></div>
+<div class="drop-new" data-drop="new"><span class="drop-label">Open in a new pane<span class="drop-sub">Folders are added to Files</span></span></div>
 <input type="file" id="fileInput" accept=".md,.markdown,.mdown,.mkd,.txt,text/markdown" multiple hidden>
 <input type="file" id="folderInput" webkitdirectory hidden>
 
@@ -502,7 +520,9 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
     p.body = h("div", { class: "pane-body" }, p.article);
     p.el = h("section", { class: "pane" },
       h("div", { class: "pane-head" }, p.tabsEl, h("div", { class: "pane-actions" }, p.splitBtn, p.closeBtn)),
-      p.body);
+      p.body,
+      h("div", { class: "drop-target", "data-drop": "pane" },
+        h("span", { class: "drop-label" }, "Open in this pane", h("span", { class: "drop-sub", text: "Folders are added to Files" }))));
     p.el.addEventListener("pointerdown", () => focusPane(p));
     p.el.addEventListener("focusin", () => focusPane(p));
     p.body.addEventListener("scroll", () => {
@@ -599,10 +619,13 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
     const recent = sortedRecent().slice(0, 8);
     p.article.replaceChildren(h("div", { class: "start" },
       h("h1", { text: "Open Markdown files" }),
-      h("p", { text: "Drop files or a folder anywhere on this page, or choose them below. Everything you open stays under Files in the sidebar, and you can split the view to read several side by side." }),
-      h("div", { class: "start-actions" },
-        h("button", { class: "btn", onclick: () => pickFiles(p) }, "Open files"),
-        h("button", { class: "btn secondary", onclick: () => pickFolder() }, "Open folder")),
+      h("div", { class: "start-drop" },
+        h("p", { text: "Drag Markdown files or a folder here" }),
+        h("span", { class: "or", text: "or" }),
+        h("div", { class: "start-actions" },
+          h("button", { class: "btn", onclick: () => pickFiles(p) }, "Open files"),
+          h("button", { class: "btn secondary", onclick: () => pickFolder({ pane: p }) }, "Open folder"))),
+      h("p", { class: "hint", text: "Everything you open stays under Files in the sidebar. Option-click a file, or drop it on the right edge, to read it next to another." }),
       recent.length ? [
         h("h2", { text: "Recent" }),
         h("ul", {}, recent.map((d) => h("li", {},
@@ -639,7 +662,9 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
   }
 
   // Open a document as a tab, in the focused pane unless told otherwise.
-  function openDoc(d, { pane = focusedPane(), side = false, hash = null } = {}) {
+  // `pane` may be a function, so a drop target can create its pane only when something opens.
+  function openDoc(d, { pane = focusedPane, side = false, hash = null } = {}) {
+    if (typeof pane === "function") pane = pane();
     d.openedAt = Date.now();
     docs.set(d.id, d);
     persistDoc(d);
@@ -904,30 +929,30 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
     renderFiles();
   }
 
-  // Add or replace a folder, show it in Files, and open its README if the pane is empty.
-  function addFolder(f) {
+  // Add or replace a folder, show it in Files, and open its README in the target pane
+  // (when given) or in the focused pane if that one is empty.
+  function addFolder(f, { pane } = {}) {
     folders.set(f.id, f);
     persistFolder(f);
     openDirs.add(f.id);
     setView("files");
     renderFiles();
-    const p = focusedPane();
     const paths = folderPaths(f);
     const readme = paths.find((x) => /^(readme|index)\.(md|markdown)$/i.test(x));
-    if (p && !p.active && readme) openFolderFile(f, readme);
+    if (readme && (pane || !focusedPane()?.active)) openFolderFile(f, readme, pane ? { pane } : {});
     toast(`${f.name}: ${paths.length} Markdown file${paths.length === 1 ? "" : "s"}`);
   }
-  async function addFolderFromHandle(dh) {
+  async function addFolderFromHandle(dh, opts) {
     let id = null;
     for (const f of folders.values()) {
       if (f.handle && await f.handle.isSameEntry(dh).catch(() => false)) id = f.id;
     }
     const paths = [];
     await walkHandle(dh, "", paths);
-    addFolder({ id: id || "d" + Date.now().toString(36), name: dh.name, handle: dh, paths, granted: true });
+    addFolder({ id: id || "d" + Date.now().toString(36), name: dh.name, handle: dh, paths, granted: true }, opts);
   }
   // Without folder handles (Firefox, Safari) the folder is kept as a copy of its Markdown files.
-  async function addFolderFromFiles(name, list) {
+  async function addFolderFromFiles(name, list, opts) {
     const files = [];
     let bytes = 0;
     for (const { path, file } of list) {
@@ -937,18 +962,18 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
     }
     const key = files.map((x) => x.path).sort().join("\n");
     const same = [...folders.values()].find((f) => !f.handle && f.name === name && folderPaths(f).slice().sort().join("\n") === key);
-    addFolder({ id: same?.id || "d" + Date.now().toString(36), name, files });
+    addFolder({ id: same?.id || "d" + Date.now().toString(36), name, files }, opts);
   }
-  function filesFromInput(fileList) {
+  function filesFromInput(fileList, opts) {
     const list = [...fileList].map((file) => ({ file, rel: file.webkitRelativePath || file.name }));
     if (!list.length) return;
     const name = list[0].rel.split("/")[0];
     const md = list
       .map(({ file, rel }) => ({ file, path: rel.split("/").slice(1).join("/") }))
       .filter(({ path }) => MD_RE.test(path) && !path.split("/").slice(0, -1).some(SKIP_DIR));
-    addFolderFromFiles(name, md);
+    addFolderFromFiles(name, md, opts);
   }
-  async function filesFromEntry(dirEntry) {
+  async function filesFromEntry(dirEntry, opts) {
     const out = [];
     async function walk(entry, prefix) {
       const reader = entry.createReader();
@@ -963,7 +988,7 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
       }
     }
     await walk(dirEntry, "");
-    addFolderFromFiles(dirEntry.name, out);
+    addFolderFromFiles(dirEntry.name, out, opts);
   }
 
   async function openFileHandle(handle, opts) {
@@ -984,25 +1009,56 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
       for (const fh of handles) await openFileHandle(fh);
     } else $("fileInput").click();
   }
-  async function pickFolder() {
+  let folderInputTarget = null;
+  async function pickFolder(opts = {}) {
     if (window.showDirectoryPicker) {
       let dh;
       try { dh = await showDirectoryPicker({ mode: "read" }); } catch { return; }
-      await addFolderFromHandle(dh);
-    } else $("folderInput").click();
+      await addFolderFromHandle(dh, opts);
+    } else { folderInputTarget = opts; $("folderInput").click(); }
   }
   $("openBtn").onclick = () => pickFiles();
   $("folderBtn").onclick = () => pickFolder();
   $("fileInput").onchange = async (e) => { for (const f of e.target.files) await openFile(f); e.target.value = ""; };
-  $("folderInput").onchange = (e) => { filesFromInput(e.target.files); e.target.value = ""; };
+  $("folderInput").onchange = (e) => { filesFromInput(e.target.files, folderInputTarget || {}); folderInputTarget = null; e.target.value = ""; };
 
   // ---------- drag & drop ----------
-  let dragDepth = 0;
-  addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; document.body.classList.add("dragging"); });
-  addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove("dragging"); } });
-  addEventListener("dragover", (e) => e.preventDefault());
+  // While files are dragged over the page, each pane shows a drop zone and a strip on the
+  // right offers a new pane. Dropping elsewhere (e.g. the sidebar) uses the focused pane.
+  const hasFiles = (e) => [...(e.dataTransfer?.types || [])].includes("Files");
+  let dragDepth = 0, overZone = null;
+  function endDrag() {
+    dragDepth = 0;
+    document.body.classList.remove("dragging");
+    overZone?.classList.remove("over");
+    overZone = null;
+  }
+  addEventListener("dragenter", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    if (dragDepth++ === 0) {
+      document.body.classList.toggle("can-split", panes.length < MAX_PANES);
+      document.body.classList.add("dragging");
+    }
+  });
+  addEventListener("dragleave", (e) => { if (hasFiles(e) && --dragDepth <= 0) endDrag(); });
+  addEventListener("dragover", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    const zone = e.target.closest?.("[data-drop]") || null;
+    if (zone !== overZone) { overZone?.classList.remove("over"); zone?.classList.add("over"); overZone = zone; }
+  });
   addEventListener("drop", (e) => {
-    e.preventDefault(); dragDepth = 0; document.body.classList.remove("dragging");
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    const zone = e.target.closest?.("[data-drop]");
+    endDrag();
+    const paneEl = zone?.dataset.drop === "pane" ? zone.closest(".pane") : null;
+    let dest = null;
+    // Resolved on first use, so a folder without a README doesn't leave an empty new pane.
+    const to = () => (dest ||= zone?.dataset.drop === "new" && panes.length < MAX_PANES
+      ? addPane(makePane())
+      : panes.find((p) => p.el === paneEl) || focusedPane());
     // DataTransfer items are only readable during the event, so grab everything now.
     const dropped = [...e.dataTransfer.items].filter((i) => i.kind === "file").map((item) => ({
       handle: item.getAsFileSystemHandle ? item.getAsFileSystemHandle().catch(() => null) : Promise.resolve(null),
@@ -1012,10 +1068,10 @@ body.side-hidden .pane:first-child .pane-head { padding-left: 88px; }
     (async () => {
       for (const it of dropped) {
         const handle = await it.handle;
-        if (handle?.kind === "directory") await addFolderFromHandle(handle);
-        else if (handle?.kind === "file") await openFileHandle(handle);
-        else if (it.entry?.isDirectory) await filesFromEntry(it.entry);
-        else if (it.file) await openFile(it.file);
+        if (handle?.kind === "directory") await addFolderFromHandle(handle, { pane: to });
+        else if (handle?.kind === "file") await openFileHandle(handle, { pane: to });
+        else if (it.entry?.isDirectory) await filesFromEntry(it.entry, { pane: to });
+        else if (it.file) await openFile(it.file, { pane: to });
       }
     })();
   });
